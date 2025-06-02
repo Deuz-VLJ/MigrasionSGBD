@@ -258,7 +258,6 @@ namespace ConexionesSGBD
         }
 
 
-
         public void MigrarDesdeSQLServer(ConexionSQLServer origen, string baseOrigen, string baseDestino, List<string> tablas)
         {
             // Cambiar a base destino y abrir conexión en PostgreSQL
@@ -269,7 +268,7 @@ namespace ConexionesSGBD
             {
                 // Obtener estructura de la tabla desde SQL Server
                 var columnas = origen.ObtenerAtributos(baseOrigen, tabla);
-                var datos = origen.ObtenerDatosTabla(baseOrigen, tabla);
+                var datos = origen.ObtenerDatosTabla(baseOrigen, tabla); // List<List<object>>
 
                 // Crear la tabla en PostgreSQL
                 var columnasPostgres = columnas.Select(c =>
@@ -278,29 +277,46 @@ namespace ConexionesSGBD
                                 : c.Value.ToLower().Contains("varchar") ? "VARCHAR(255)"
                                 : c.Value.ToLower().Contains("decimal") ? "DECIMAL"
                                 : "TEXT";
-                    return $"{c.Key} {tipo}";
+                    return $"\"{c.Key}\" {tipo}";
                 });
 
-                string scriptCrear = $"CREATE TABLE IF NOT EXISTS {tabla} ({string.Join(", ", columnasPostgres)});";
+                string scriptCrear = $"CREATE TABLE IF NOT EXISTS \"{tabla}\" ({string.Join(", ", columnasPostgres)});";
                 using (var cmd = new NpgsqlCommand(scriptCrear, conexion))
                 {
                     cmd.ExecuteNonQuery();
                 }
 
-                // Insertar datos
+                // Insertar datos en PostgreSQL
                 foreach (var fila in datos)
                 {
-                    string columnasInsert = string.Join(", ", columnas.Keys);
-                    string valoresInsert = string.Join(", ", fila.Select(v => v != null ? $"'{v.ToString().Replace("'", "''")}'" : "NULL"));
-                    string insert = $"INSERT INTO {tabla} ({columnasInsert}) VALUES ({valoresInsert});";
+                    string columnasInsert = string.Join(", ", columnas.Keys.Select(k => $"\"{k}\""));
 
-                    using (var cmd = new NpgsqlCommand(insert, conexion))
+                    string valoresInsert = string.Join(", ", fila.Select((v, i) =>
                     {
-                        cmd.ExecuteNonQuery();
+                        var tipoCol = columnas.ElementAt(i).Value.ToLower();
+                        if (v == null || string.IsNullOrWhiteSpace(v.ToString()))
+                            return "NULL";
+
+                        if (tipoCol.Contains("decimal") || tipoCol.Contains("numeric"))
+                            return v.ToString().Replace(',', '.'); // Convertir coma a punto decimal
+
+                        if (tipoCol.Contains("int"))
+                            return v.ToString();
+
+                        return $"'{v.ToString().Replace("'", "''")}'";
+                    }));
+
+                    string insert = $"INSERT INTO \"{tabla}\" ({columnasInsert}) VALUES ({valoresInsert});";
+
+                    using (var cmdInsert = new NpgsqlCommand(insert, conexion))
+                    {
+                        cmdInsert.ExecuteNonQuery();
                     }
                 }
             }
         }
+
+
         NpgsqlConnection GetConexion()
         {
             return conexion;

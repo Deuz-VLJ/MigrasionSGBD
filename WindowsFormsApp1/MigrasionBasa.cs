@@ -49,7 +49,7 @@ namespace WindowsFormsApp1
         private void button1_Click(object sender, EventArgs e)
         {
             string baseOrigen = comboBoxBases.SelectedItem?.ToString();
-            string baseDestino = baseOrigen; // o usa otro ComboBox si tienes uno para destino
+            string baseDestino = baseOrigen; // puedes modificarlo si usas otro ComboBox para destino
 
             var tablas = new List<string>();
             foreach (var item in checkedListBoxTablas.CheckedItems)
@@ -63,29 +63,44 @@ namespace WindowsFormsApp1
                 {
                     if (conexionDestino is ConexionPostgresSQL postgres)
                     {
-                        postgres.MigrarDesdeSQLServer(sqlServer, baseOrigen, baseDestino, tablas);
-                        MessageBox.Show("Migración completada con éxito a PostgreSQL.");
+                        try
+                        {
+                            postgres.MigrarDesdeSQLServer(sqlServer, baseOrigen, baseDestino, tablas);
+                            MessageBox.Show("✅ Migración completada con éxito a PostgreSQL.");
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show("❌ Error durante la migración a PostgreSQL:\n" + ex.Message);
+                        }
                     }
                     else if (conexionDestino is ConexionMySQL mysql)
                     {
-                        mysql.MigrarDesdeSQLServer(sqlServer, baseOrigen, baseDestino, tablas);
-                        MessageBox.Show("Migración completada con éxito a MySQL.");
+                        try
+                        {
+                            mysql.MigrarDesdeSQLServer(sqlServer, baseOrigen, baseDestino, tablas);
+                            MessageBox.Show("✅ Migración completada con éxito a MySQL.");
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show("❌ Error durante la migración a MySQL:\n" + ex.Message);
+                        }
                     }
                     else
                     {
-                        MessageBox.Show("Destino no compatible para migración desde SQL Server.");
+                        MessageBox.Show("❌ El destino seleccionado no es compatible para la migración.");
                     }
                 }
                 else
                 {
-                    MessageBox.Show("Origen no compatible. Solo se admite SQL Server como origen.");
+                    MessageBox.Show("❌ Solo se admite SQL Server como origen.");
                 }
             }
             else
             {
-                MessageBox.Show("Debe seleccionar una base de datos y al menos una tabla.");
+                MessageBox.Show("⚠️ Debe seleccionar una base de datos y al menos una tabla.");
             }
         }
+
 
 
 
