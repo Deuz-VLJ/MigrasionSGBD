@@ -80,42 +80,72 @@ namespace ConexionesSGBD
         public List<string> ObtenerTablas(string baseDatos)
         {
             List<string> tablas = new List<string>();
-            string consulta = $"USE [{baseDatos}]; SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE';";
+
+            CambiarBaseDatos(baseDatos);
+
+            string consulta = @"SELECT TABLE_SCHEMA + '.' + TABLE_NAME 
+                        FROM INFORMATION_SCHEMA.TABLES 
+                        WHERE TABLE_TYPE = 'BASE TABLE'";
 
             using (SqlCommand cmd = new SqlCommand(consulta, conexion))
             using (SqlDataReader reader = cmd.ExecuteReader())
             {
                 while (reader.Read())
                 {
-                    tablas.Add(reader["TABLE_NAME"].ToString());
+                    tablas.Add(reader.GetString(0));
                 }
             }
 
             return tablas;
         }
 
+
         public Dictionary<string, string> ObtenerAtributos(string baseDatos, string tabla)
         {
             Dictionary<string, string> atributos = new Dictionary<string, string>();
 
-            // Obtener columnas y tipos
-            string consulta = $"USE [{baseDatos}]; SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{tabla}';";
+            // Dividir esquema y tabla si vienen juntos
+            string esquema = "dbo"; // por defecto
+            string nombreTabla = tabla;
+
+            if (tabla.Contains('.'))
+            {
+                var partes = tabla.Split('.');
+                esquema = partes[0];
+                nombreTabla = partes[1];
+            }
+
+            // Consulta para columnas y tipos con longitud
+            string consulta = $@"
+    USE [{baseDatos}];
+    SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH 
+    FROM INFORMATION_SCHEMA.COLUMNS 
+    WHERE TABLE_NAME = '{nombreTabla}' AND TABLE_SCHEMA = '{esquema}';";
+
             using (SqlCommand cmd = new SqlCommand(consulta, conexion))
             using (SqlDataReader reader = cmd.ExecuteReader())
             {
                 while (reader.Read())
                 {
-                    atributos[reader["COLUMN_NAME"].ToString()] = reader["DATA_TYPE"].ToString();
+                    string nombre = reader["COLUMN_NAME"].ToString();
+                    string tipo = reader["DATA_TYPE"].ToString().ToLower();
+                    string longitud = reader["CHARACTER_MAXIMUM_LENGTH"]?.ToString();
+
+                    // Incluir longitud si es varchar o similar
+                    if (!string.IsNullOrEmpty(longitud) && int.TryParse(longitud, out int len) && tipo.Contains("char"))
+                        atributos[nombre] = $"{tipo}({len})";
+                    else
+                        atributos[nombre] = tipo;
                 }
             }
 
-            // Obtener claves primarias
+            // Consulta para claves primarias
             string pkQuery = $@"
         USE [{baseDatos}];
         SELECT COLUMN_NAME 
         FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
         WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPrimaryKey') = 1 
-        AND TABLE_NAME = '{tabla}';";
+        AND TABLE_NAME = '{nombreTabla}' AND TABLE_SCHEMA = '{esquema}';";
 
             List<string> clavesPrimarias = new List<string>();
             using (SqlCommand cmd = new SqlCommand(pkQuery, conexion))
@@ -127,7 +157,7 @@ namespace ConexionesSGBD
                 }
             }
 
-            // Agregar "PK" si corresponde
+            // Marcar columnas primarias
             foreach (var pk in clavesPrimarias)
             {
                 if (atributos.ContainsKey(pk))
@@ -138,6 +168,8 @@ namespace ConexionesSGBD
 
             return atributos;
         }
+
+
 
 
         public List<string> ObtenerVistas(string baseDatos)
@@ -270,14 +302,16 @@ namespace ConexionesSGBD
             return EjecutarConsulta("SELECT name FROM sys.databases;");
         }
 
-        public List<List<object>> ObtenerDatosTabla(string baseDatos, string tabla)
+        public List<List<object>> ObtenerDatosTabla(string baseDatos, string tablaOriginal)
         {
             List<List<object>> filas = new List<List<object>>();
 
-            CambiarBaseDatos(baseDatos); // Asegúrate de tener este método implementado
+            CambiarBaseDatos(baseDatos);
             AbrirConexion();
 
-            string consulta = $"SELECT * FROM {tabla}";
+            // tablaOriginal debería venir como "Sales.SalesTaxRate"
+            string consulta = $"SELECT * FROM [{tablaOriginal.Replace(".", "].[")}]";
+
             using (SqlCommand cmd = new SqlCommand(consulta, conexion))
             using (SqlDataReader reader = cmd.ExecuteReader())
             {
@@ -294,6 +328,8 @@ namespace ConexionesSGBD
 
             return filas;
         }
+
+
 
         public void CambiarBaseDatos(string baseDatos)
         {

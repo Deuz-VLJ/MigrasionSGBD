@@ -266,47 +266,63 @@ namespace ConexionesSGBD
 
             foreach (var tabla in tablas)
             {
-                // Obtener estructura de la tabla desde SQL Server
-                var columnas = origen.ObtenerAtributos(baseOrigen, tabla);
-                var datos = origen.ObtenerDatosTabla(baseOrigen, tabla); // List<List<object>>
+                string nombreTablaPostgres = tabla.Replace('.', '_'); // PostgreSQL no acepta puntos en nombres
 
-                // Crear la tabla en PostgreSQL
+                // Obtener columnas y datos desde SQL Server
+                var columnas = origen.ObtenerAtributos(baseOrigen, tabla); // Dictionary<string, string>
+                var datos = origen.ObtenerDatosTabla(baseOrigen, tabla);   // List<List<object>>
+
+                // Crear tabla en PostgreSQL (eliminar si ya existe)
+                string scriptDrop = $"DROP TABLE IF EXISTS \"{nombreTablaPostgres}\";";
+                using (var cmdDrop = new NpgsqlCommand(scriptDrop, conexion))
+                {
+                    cmdDrop.ExecuteNonQuery();
+                }
+
                 var columnasPostgres = columnas.Select(c =>
                 {
-                    string tipo = c.Value.ToLower().Contains("int") ? "INTEGER"
-                                : c.Value.ToLower().Contains("varchar") ? "VARCHAR(255)"
-                                : c.Value.ToLower().Contains("decimal") ? "DECIMAL"
-                                : "TEXT";
-                    return $"\"{c.Key}\" {tipo}";
+                    string tipoSQL = c.Value.ToLower().Split('(')[0]; // remover longitudes como varchar(255)
+
+                    string tipoPostgres =
+                        tipoSQL.Contains("int") ? "INTEGER" :
+                        tipoSQL.Contains("decimal") || tipoSQL.Contains("numeric") ? "DECIMAL" :
+                        tipoSQL.Contains("float") || tipoSQL.Contains("real") ? "DOUBLE PRECISION" :
+                        tipoSQL.Contains("char") || tipoSQL.Contains("text") || tipoSQL.Contains("varchar") ? "TEXT" :
+                        "TEXT"; // tipo por defecto
+
+                    string nombreColumna = c.Key.Replace('.', '_');
+                    return $"\"{nombreColumna}\" {tipoPostgres}";
                 });
 
-                string scriptCrear = $"CREATE TABLE IF NOT EXISTS \"{tabla}\" ({string.Join(", ", columnasPostgres)});";
-                using (var cmd = new NpgsqlCommand(scriptCrear, conexion))
+                string scriptCrear = $"CREATE TABLE \"{nombreTablaPostgres}\" ({string.Join(", ", columnasPostgres)});";
+                using (var cmdCrear = new NpgsqlCommand(scriptCrear, conexion))
                 {
-                    cmd.ExecuteNonQuery();
+                    cmdCrear.ExecuteNonQuery();
                 }
 
                 // Insertar datos en PostgreSQL
                 foreach (var fila in datos)
                 {
-                    string columnasInsert = string.Join(", ", columnas.Keys.Select(k => $"\"{k}\""));
+                    string columnasInsert = string.Join(", ", columnas.Keys.Select(k => $"\"{k.Replace('.', '_')}\""));
 
                     string valoresInsert = string.Join(", ", fila.Select((v, i) =>
                     {
-                        var tipoCol = columnas.ElementAt(i).Value.ToLower();
+                        string tipoCol = columnas.ElementAt(i).Value.ToLower();
+
                         if (v == null || string.IsNullOrWhiteSpace(v.ToString()))
                             return "NULL";
 
-                        if (tipoCol.Contains("decimal") || tipoCol.Contains("numeric"))
-                            return v.ToString().Replace(',', '.'); // Convertir coma a punto decimal
+                        if (tipoCol.Contains("decimal") || tipoCol.Contains("numeric") || tipoCol.Contains("float") || tipoCol.Contains("real"))
+                            return v.ToString().Replace(',', '.'); // PostgreSQL usa punto decimal
 
                         if (tipoCol.Contains("int"))
                             return v.ToString();
 
+                        // Escapar comillas para texto
                         return $"'{v.ToString().Replace("'", "''")}'";
                     }));
 
-                    string insert = $"INSERT INTO \"{tabla}\" ({columnasInsert}) VALUES ({valoresInsert});";
+                    string insert = $"INSERT INTO \"{nombreTablaPostgres}\" ({columnasInsert}) VALUES ({valoresInsert});";
 
                     using (var cmdInsert = new NpgsqlCommand(insert, conexion))
                     {
@@ -315,6 +331,8 @@ namespace ConexionesSGBD
                 }
             }
         }
+
+
 
 
         NpgsqlConnection GetConexion()

@@ -46,10 +46,10 @@ namespace WindowsFormsApp1
         }
 
 
-        private void button1_Click(object sender, EventArgs e)
+        private async void button1_Click(object sender, EventArgs e)
         {
             string baseOrigen = comboBoxBases.SelectedItem?.ToString();
-            string baseDestino = baseOrigen; // puedes modificarlo si usas otro ComboBox para destino
+            string baseDestino = baseOrigen;
 
             var tablas = new List<string>();
             foreach (var item in checkedListBoxTablas.CheckedItems)
@@ -61,33 +61,27 @@ namespace WindowsFormsApp1
             {
                 if (conexionInicio is ConexionSQLServer sqlServer)
                 {
-                    if (conexionDestino is ConexionPostgresSQL postgres)
+                    if (conexionDestino is ConexionPostgresSQL postgres || conexionDestino is ConexionMySQL mysql)
                     {
-                        try
+                        Form2 mensaje = new Form2();
+
+                        Task migrar = Task.Run(() =>
                         {
-                            postgres.MigrarDesdeSQLServer(sqlServer, baseOrigen, baseDestino, tablas);
-                            MessageBox.Show("✅ Migración completada con éxito a PostgreSQL.");
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show("❌ Error durante la migración a PostgreSQL:\n" + ex.Message);
-                        }
-                    }
-                    else if (conexionDestino is ConexionMySQL mysql)
-                    {
-                        try
-                        {
-                            mysql.MigrarDesdeSQLServer(sqlServer, baseOrigen, baseDestino, tablas);
-                            MessageBox.Show("✅ Migración completada con éxito a MySQL.");
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show("❌ Error durante la migración a MySQL:\n" + ex.Message);
-                        }
+                            if (conexionDestino is ConexionPostgresSQL pg)
+                                pg.MigrarDesdeSQLServer(sqlServer, baseOrigen, baseDestino, tablas);
+                            else if (conexionDestino is ConexionMySQL my)
+                                my.MigrarDesdeSQLServer(sqlServer, baseOrigen, baseDestino, tablas);
+                        });
+
+                        mensaje.Show();
+                        await migrar;
+                        mensaje.Close();
+
+                        MessageBox.Show("✅ Migración completada con éxito.");
                     }
                     else
                     {
-                        MessageBox.Show("❌ El destino seleccionado no es compatible para la migración.");
+                        MessageBox.Show("❌ El destino seleccionado no es compatible.");
                     }
                 }
                 else
@@ -97,12 +91,17 @@ namespace WindowsFormsApp1
             }
             else
             {
-                MessageBox.Show("⚠️ Debe seleccionar una base de datos y al menos una tabla.");
+                MessageBox.Show("⚠️ Debe seleccionar una base y al menos una tabla.");
             }
         }
 
 
-
-
+        private void button2_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < checkedListBoxTablas.Items.Count; i++)
+            {
+                checkedListBoxTablas.SetItemChecked(i, true);
+            }
+        }
     }
 }

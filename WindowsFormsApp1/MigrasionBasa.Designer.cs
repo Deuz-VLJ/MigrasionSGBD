@@ -32,6 +32,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.checkedListBoxTablas = new System.Windows.Forms.CheckedListBox();
             this.button1 = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // comboBoxBases
@@ -70,11 +71,22 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(152, 277);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(81, 36);
+            this.button2.TabIndex = 4;
+            this.button2.Text = "select all";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
             // MigrasionBasa
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(387, 450);
+            this.Controls.Add(this.button2);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.checkedListBoxTablas);
             this.Controls.Add(this.label1);
@@ -93,5 +105,6 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.CheckedListBox checkedListBoxTablas;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button button2;
     }
 }

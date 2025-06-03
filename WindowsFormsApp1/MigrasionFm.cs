@@ -43,24 +43,44 @@ namespace WindowsFormsApp1
         {
             if (comboBoxSqlServer.SelectedItem == null || comboBoxOtros.SelectedItem == null)
             {
-                MessageBox.Show("Debes seleccionar tanto una conexión de origen (SQL Server) como una de destino (PostgreSQL).");
+                MessageBox.Show("⚠️ Debes seleccionar una conexión de origen (SQL Server) y una de destino (PostgreSQL o MySQL).");
                 return;
             }
 
             string nombreConexionOrigen = comboBoxSqlServer.SelectedItem.ToString();
             string nombreConexionDestino = comboBoxOtros.SelectedItem.ToString();
 
-            if (!conexiones.ContainsKey(nombreConexionOrigen) || !conexiones.ContainsKey(nombreConexionDestino))
+            if (!conexiones.TryGetValue(nombreConexionOrigen, out IBaseDatos conexionOrigen) ||
+                !conexiones.TryGetValue(nombreConexionDestino, out IBaseDatos conexionDestino))
             {
-                MessageBox.Show("No se encontraron una o ambas conexiones seleccionadas.");
+                MessageBox.Show("❌ No se encontraron una o ambas conexiones seleccionadas.");
                 return;
             }
 
-            IBaseDatos conexionOrigen = conexiones[nombreConexionOrigen];
-            IBaseDatos conexionDestino = conexiones[nombreConexionDestino];
+            try
+            {
+                // Verificación opcional de conectividad antes de abrir el formulario
+                if (!conexionOrigen.ProbarConexion())
+                {
+                    MessageBox.Show("❌ No se pudo conectar con la base de datos de origen.");
+                    return;
+                }
 
-            var ventanaMigrar = new MigrasionBasa(conexionOrigen, conexionDestino);
-            ventanaMigrar.ShowDialog();
+                if (!conexionDestino.ProbarConexion())
+                {
+                    MessageBox.Show("❌ No se pudo conectar con la base de datos de destino.");
+                    return;
+                }
+
+                // Abrir el formulario de migración
+                var ventanaMigrar = new MigrasionBasa(conexionOrigen, conexionDestino);
+                ventanaMigrar.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"❌ Error al intentar abrir la ventana de migración:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
+
     }
 }

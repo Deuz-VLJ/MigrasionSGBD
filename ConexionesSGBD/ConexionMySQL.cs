@@ -289,6 +289,7 @@ namespace ConexionesSGBD
             }
         }
 
+
         public void MigrarDesdeSQLServer(ConexionSQLServer origen, string baseOrigen, string baseDestino, List<string> tablas)
         {
             // Verificar si la base existe, si no, crearla
@@ -315,14 +316,38 @@ namespace ConexionesSGBD
                 // Construir estructura de tabla
                 var columnasMysql = columnas.Select(c =>
                 {
-                    string tipo = c.Value.ToLower().Contains("int") ? "BIGINT"
-                                : c.Value.ToLower().Contains("varchar") ? "VARCHAR(255)"
-                                : c.Value.ToLower().Contains("decimal") ? "DECIMAL(10,2)"
-                                : "TEXT";
+                    string tipoOriginal = c.Value.ToLower();
+                    string tipo;
+
+                    if (tipoOriginal.StartsWith("varchar") && tipoOriginal.Contains("(") && tipoOriginal.Contains(")"))
+                    {
+                        tipo = "LONGTEXT"; // forzamos a LONGTEXT para evitar overflow
+                    }
+                    else if (tipoOriginal.Contains("int"))
+                    {
+                        tipo = "BIGINT";
+                    }
+                    else if (tipoOriginal.Contains("decimal"))
+                    {
+                        tipo = "DECIMAL(10,2)";
+                    }
+                    else
+                    {
+                        tipo = "LONGTEXT";
+                    }
+
                     return $"`{c.Key}` {tipo}";
                 });
 
-                string scriptCrear = $"CREATE TABLE IF NOT EXISTS `{tabla}` ({string.Join(", ", columnasMysql)});";
+                // Eliminar la tabla si ya existe
+                string scriptDrop = $"DROP TABLE IF EXISTS `{tabla}`;";
+                using (var cmdDrop = new MySqlCommand(scriptDrop, conexion))
+                {
+                    cmdDrop.ExecuteNonQuery();
+                }
+
+                // Crear la tabla desde cero
+                string scriptCrear = $"CREATE TABLE `{tabla}` ({string.Join(", ", columnasMysql)});";
                 using (var cmdCrear = new MySqlCommand(scriptCrear, conexion))
                 {
                     cmdCrear.ExecuteNonQuery();
@@ -343,13 +368,18 @@ namespace ConexionesSGBD
                         {
                             valoresInsert.Add("NULL");
                         }
-                        else if (tipoColumna.Contains("int") || tipoColumna.Contains("decimal"))
+                        else if (tipoColumna.Contains("decimal") || tipoColumna.Contains("numeric"))
+                        {
+                            valoresInsert.Add(valor.ToString().Replace(',', '.'));
+                        }
+                        else if (tipoColumna.Contains("int"))
                         {
                             valoresInsert.Add(valor.ToString());
                         }
                         else
                         {
-                            valoresInsert.Add($"'{valor.ToString().Replace("'", "''")}'");
+                            string valorStr = valor.ToString();
+                            valoresInsert.Add($"'{valorStr.Replace("'", "''")}'");
                         }
                     }
 
@@ -364,6 +394,16 @@ namespace ConexionesSGBD
 
 
 
+        private string ExtraerLongitud(string tipo)
+        {
+            int inicio = tipo.IndexOf("(") + 1;
+            int fin = tipo.IndexOf(")");
+            if (inicio > 0 && fin > inicio)
+            {
+                return tipo.Substring(inicio, fin - inicio);
+            }
+            return "255"; // valor por defecto si no se encuentra
+        }
 
 
 
