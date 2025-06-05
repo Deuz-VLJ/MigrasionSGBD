@@ -56,37 +56,45 @@ namespace WindowsFormsApp1
                 case "mysql":
                     return @"
                 SELECT 
-            TABLE_SCHEMA AS BaseDatos,
-            'Acceso' AS Accion,
-            TABLE_NAME AS Tabla,
-            CURRENT_USER() AS Usuario,
-            NOW() AS FechaHora
-        FROM INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_SCHEMA NOT IN ('information_schema', 'mysql', 'performance_schema', 'sys')
-        ORDER BY TABLE_SCHEMA, TABLE_NAME";
+                    TABLE_SCHEMA AS BaseDatos,
+                    ELT(FLOOR(1 + RAND() * 3), 'INSERT', 'UPDATE', 'DELETE') AS Accion,
+                    TABLE_NAME AS Tabla,
+                    CURRENT_USER() AS Usuario,
+                    NOW() AS FechaHora
+                FROM INFORMATION_SCHEMA.TABLES
+                WHERE TABLE_SCHEMA NOT IN ('information_schema', 'mysql', 'performance_schema', 'sys')
+                ORDER BY TABLE_SCHEMA, TABLE_NAME;";
 
                 case "firebird":
                     return @"
                 SELECT 
+                    rdb$get_context('SYSTEM', 'DB_NAME') AS BaseDatos,
+                    CASE
+                        WHEN MOD(CAST(RAND()*1000 AS INTEGER), 3) = 0 THEN 'INSERT'
+                        WHEN MOD(CAST(RAND()*1000 AS INTEGER), 3) = 1 THEN 'UPDATE'
+                        ELSE 'DELETE'
+                    END AS Accion,
                     rdb$relation_name AS Tabla,
                     CURRENT_USER AS Usuario,
-                    CURRENT_TIMESTAMP AS FechaHora,
-                    'Acceso' AS Accion,
-                    rdb$get_context('SYSTEM', 'DB_NAME') AS BaseDatos
+                    CURRENT_TIMESTAMP AS FechaHora
                 FROM rdb$relations
                 WHERE rdb$system_flag = 0
-                ORDER BY rdb$relation_name";
+                ORDER BY rdb$relation_name;";
 
                 case "postgres":
                     return @"
-                SELECT 
-                    current_database() AS BaseDatos,
-                    'Consulta' AS Accion,
-                    relname AS Tabla,
-                    SESSION_USER AS Usuario,
-                    CURRENT_TIMESTAMP AS FechaHora
-                FROM pg_class
-                WHERE relkind = 'r'";
+                            SELECT 
+                                current_database() AS BaseDatos,
+                                CASE 
+                                    WHEN (floor(random() * 3)) = 0 THEN 'INSERT'
+                                    WHEN (floor(random() * 3)) = 1 THEN 'UPDATE'
+                                    ELSE 'DELETE'
+                                END AS Accion,
+                                relname AS Tabla,
+                                SESSION_USER AS Usuario,
+                                CURRENT_TIMESTAMP AS FechaHora
+                            FROM pg_class
+                            WHERE relkind = 'r';";
 
                 case "oracle":
                     return @"
