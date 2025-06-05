@@ -332,12 +332,29 @@ namespace ConexionesSGBD
             }
         }
 
-
-
-
         NpgsqlConnection GetConexion()
         {
             return conexion;
+        }
+
+
+        public DataTable EjecutarConsultaDataTable(string consulta)
+        {
+            DataTable dt = new DataTable();
+            try
+            {
+                AbrirConexion();
+                using (NpgsqlCommand cmd = new NpgsqlCommand(consulta, conexion))
+                using (NpgsqlDataAdapter adapter = new NpgsqlDataAdapter(cmd))
+                {
+                    adapter.Fill(dt);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al ejecutar consulta DataTable en PostgreSQL: {ex.Message}");
+            }
+            return dt;
         }
 
 

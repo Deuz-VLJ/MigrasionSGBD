@@ -127,6 +127,7 @@
     <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
     </Reference>
+    <Reference Include="System.Windows.Forms.DataVisualization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -141,6 +142,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Auditoria.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Auditoria.Designer.cs">
+      <DependentUpon>Auditoria.cs</DependentUpon>
+    </Compile>
     <Compile Include="Form2.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -165,6 +172,12 @@
     <Compile Include="MigrasionFm.Designer.cs">
       <DependentUpon>MigrasionFm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Moniturizacion.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Moniturizacion.Designer.cs">
+      <DependentUpon>Moniturizacion.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SgbdMultiBaseDatos.cs">
@@ -173,6 +186,9 @@
     <Compile Include="SgbdMultiBaseDatos.Designer.cs">
       <DependentUpon>SgbdMultiBaseDatos.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="Auditoria.resx">
+      <DependentUpon>Auditoria.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Form2.resx">
       <DependentUpon>Form2.cs</DependentUpon>
     </EmbeddedResource>
@@ -184,6 +200,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="MigrasionFm.resx">
       <DependentUpon>MigrasionFm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Moniturizacion.resx">
+      <DependentUpon>Moniturizacion.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

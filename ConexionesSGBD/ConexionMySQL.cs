@@ -405,6 +405,24 @@ namespace ConexionesSGBD
             return "255"; // valor por defecto si no se encuentra
         }
 
+        public DataTable EjecutarConsultaDataTable(string consulta)
+        {
+            DataTable dt = new DataTable();
+            try
+            {
+                AbrirConexion();
+                using (MySqlCommand cmd = new MySqlCommand(consulta, conexion))
+                using (MySqlDataAdapter adapter = new MySqlDataAdapter(cmd))
+                {
+                    adapter.Fill(dt);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al ejecutar consulta DataTable en MySQL: {ex.Message}");
+            }
+            return dt;
+        }
 
 
     }

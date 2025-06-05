@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -31,5 +32,8 @@ namespace ConexionesSGBD
 
         // 🔹 Nuevo método para ejecutar consultas
         List<string> EjecutarConsulta(string consulta);
+
+        DataTable EjecutarConsultaDataTable(string consulta);
+
     }
 }

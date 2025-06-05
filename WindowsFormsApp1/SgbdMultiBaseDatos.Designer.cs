@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.btnAgregarConexion = new System.Windows.Forms.Button();
             this.btnEjecutar = new System.Windows.Forms.Button();
             this.txtQuery = new System.Windows.Forms.TextBox();
@@ -36,6 +37,10 @@
             this.BttDesconexion = new System.Windows.Forms.Button();
             this.BttActualizar = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
+            this.contextMenuServidor = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.monitoreoToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.auditoriaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.contextMenuServidor.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnAgregarConexion
@@ -114,6 +119,28 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
+            // contextMenuServidor
+            // 
+            this.contextMenuServidor.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.monitoreoToolStripMenuItem1,
+            this.auditoriaToolStripMenuItem});
+            this.contextMenuServidor.Name = "contextMenuServidor";
+            this.contextMenuServidor.Size = new System.Drawing.Size(181, 70);
+            // 
+            // monitoreoToolStripMenuItem1
+            // 
+            this.monitoreoToolStripMenuItem1.Name = "monitoreoToolStripMenuItem1";
+            this.monitoreoToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.monitoreoToolStripMenuItem1.Text = "Monitoreo";
+            this.monitoreoToolStripMenuItem1.Click += new System.EventHandler(this.monitoreoToolStripMenuItem1_Click);
+            // 
+            // auditoriaToolStripMenuItem
+            // 
+            this.auditoriaToolStripMenuItem.Name = "auditoriaToolStripMenuItem";
+            this.auditoriaToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.auditoriaToolStripMenuItem.Text = "Auditoria";
+            this.auditoriaToolStripMenuItem.Click += new System.EventHandler(this.auditoriaToolStripMenuItem_Click);
+            // 
             // SgbdMultiBaseDatos
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -130,6 +157,7 @@
             this.Name = "SgbdMultiBaseDatos";
             this.Text = "SgbdMultiBaseDatos";
             this.Load += new System.EventHandler(this.SgbdMultiBaseDatos_Load);
+            this.contextMenuServidor.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -145,5 +173,8 @@
         private System.Windows.Forms.Button BttDesconexion;
         private System.Windows.Forms.Button BttActualizar;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.ContextMenuStrip contextMenuServidor;
+        private System.Windows.Forms.ToolStripMenuItem monitoreoToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem auditoriaToolStripMenuItem;
     }
 }

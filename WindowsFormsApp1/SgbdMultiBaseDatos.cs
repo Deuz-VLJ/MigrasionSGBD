@@ -1,6 +1,4 @@
-﻿// Código completo actualizado del formulario SgbdMultiBaseDatos
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -20,6 +18,8 @@ namespace WindowsFormsApp1
         {
             InitializeComponent();
             this.conexiones = conexiones ?? new Dictionary<string, IBaseDatos>();
+            this.treeViewBD.MouseUp += new System.Windows.Forms.MouseEventHandler(this.treeViewBD_MouseUp);
+
         }
 
         private void SgbdMultiBaseDatos_Load(object sender, EventArgs e)
@@ -474,5 +474,74 @@ namespace WindowsFormsApp1
             var migracionForm = new MigrasionFm(conexiones);
             migracionForm.Show();
         }
+
+        private TreeNode nodoClicDerecho; // almacena el nodo seleccionado con clic derecho
+
+        private void treeViewBD_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                TreeNode nodo = treeViewBD.GetNodeAt(e.X, e.Y);
+                if (nodo != null && nodo.Tag?.ToString() == "conexion")
+                {
+                    treeViewBD.SelectedNode = nodo;
+                    nodoClicDerecho = nodo;
+                    contextMenuServidor.Show(treeViewBD, e.Location);
+                }
+            }
+        }
+
+        private void monitoreoToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            if (nodoClicDerecho != null)
+            {
+                string nombreConexion = nodoClicDerecho.Text;
+
+                if (conexiones.TryGetValue(nombreConexion, out IBaseDatos conexion))
+                {
+                    if (conexion is ConexionSQLServer sqlServerConexion)
+                    {
+                        Moniturizacion form = new Moniturizacion(sqlServerConexion);
+                        form.Show();
+                    }
+                }
+            }
+        }
+
+
+
+        private void auditoriaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (nodoClicDerecho != null)
+            {
+                string nombreConexion = nodoClicDerecho.Text;
+                MessageBox.Show($"🔍 Auditoría de la conexión: {nombreConexion}");
+
+                // Obtener la conexión desde el diccionario real de conexiones
+                if (conexiones.TryGetValue(nombreConexion, out IBaseDatos conexion))
+                {
+                    // Detectar el tipo de conexión
+                    string tipoConexion = conexion.GetType().Name.ToLower();
+
+                    string tipoGestor = tipoConexion.Contains("sqlserver") ? "sqlserver" :
+                                        tipoConexion.Contains("mysql") ? "mysql" :
+                                        tipoConexion.Contains("firebird") ? "firebird" :
+                                        tipoConexion.Contains("postgres") ? "postgres" :
+                                        tipoConexion.Contains("oracle") ? "oracle" : "desconocido";
+
+                    // Abrir el formulario de auditoría y pasar la conexión y tipo de gestor
+                    Auditoria formAuditoria = new Auditoria(conexion, tipoGestor);
+                    formAuditoria.Show();
+                }
+                else
+                {
+                    MessageBox.Show("No se pudo encontrar la conexión correspondiente en el diccionario.");
+                }
+            }
+        }
+
+
+
+
     }
 }

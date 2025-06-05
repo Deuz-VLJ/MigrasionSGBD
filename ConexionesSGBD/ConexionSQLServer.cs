@@ -100,6 +100,20 @@ namespace ConexionesSGBD
         }
 
 
+        public SqlConnection GetConnection()
+        {
+            AbrirConexion(); // Asegura que esté abierta antes de devolverla
+            return conexion;
+        }
+
+        public string GetCadenaConexion()
+        {
+            return conexion.ConnectionString;
+        }
+
+
+
+
         public Dictionary<string, string> ObtenerAtributos(string baseDatos, string tabla)
         {
             Dictionary<string, string> atributos = new Dictionary<string, string>();
@@ -329,8 +343,6 @@ namespace ConexionesSGBD
             return filas;
         }
 
-
-
         public void CambiarBaseDatos(string baseDatos)
         {
             if (conexion.State == ConnectionState.Open)
@@ -348,6 +360,24 @@ namespace ConexionesSGBD
             }
         }
 
+        public DataTable EjecutarConsultaDataTable(string consulta)
+        {
+            DataTable dt = new DataTable();
+            try
+            {
+                AbrirConexion();
+                using (SqlCommand cmd = new SqlCommand(consulta, conexion))
+                using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                {
+                    adapter.Fill(dt);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al ejecutar consulta DataTable en SQL Server: {ex.Message}");
+            }
+            return dt;
+        }
 
 
     }

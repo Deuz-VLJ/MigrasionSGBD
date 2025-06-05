@@ -72,9 +72,7 @@ namespace ConexionesSGBD
             return resultados;
         }
 
-       
-
-
+      
         public List<string> ObtenerBasesDeDatos()
         {
             List<string> basesDeDatos = new List<string>();
@@ -290,14 +288,6 @@ WHERE object_type = 'PROCEDURE' AND owner = '{baseDatos.ToUpper()}'";
             return procedimientos;
         }
 
-
-
-
-
-
-
-
-
         public List<string> ObtenerFunciones()
         {
             return EjecutarConsulta("SELECT object_name FROM all_objects WHERE object_type = 'FUNCTION' AND owner = USER;");
@@ -322,5 +312,26 @@ WHERE object_type = 'PROCEDURE' AND owner = '{baseDatos.ToUpper()}'";
         {
             return EjecutarConsulta("SELECT sequence_name FROM all_sequences WHERE sequence_owner = (SELECT USER FROM dual);");
         }
+
+
+        public DataTable EjecutarConsultaDataTable(string consulta)
+        {
+            DataTable dt = new DataTable();
+            try
+            {
+                AbrirConexion();
+                using (OracleCommand cmd = new OracleCommand(consulta, conexion))
+                using (OracleDataAdapter adapter = new OracleDataAdapter(cmd))
+                {
+                    adapter.Fill(dt);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al ejecutar consulta DataTable en Oracle: {ex.Message}");
+            }
+            return dt;
+        }
+
     }
 }

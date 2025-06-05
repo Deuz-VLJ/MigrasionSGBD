@@ -305,11 +305,6 @@ namespace ConexionesSGBD
         }
 
 
-
-
-
-
-
         public List<string> ObtenerIndices()
         {
             return EjecutarConsulta("SELECT RDB$INDEX_NAME FROM RDB$INDICES;");
@@ -329,6 +324,26 @@ namespace ConexionesSGBD
         {
             return EjecutarConsulta("SELECT DISTINCT RDB$FIELD_NAME FROM RDB$FIELDS;");
         }
+
+        public DataTable EjecutarConsultaDataTable(string consulta)
+        {
+            DataTable dt = new DataTable();
+            try
+            {
+                AbrirConexion();
+                using (FbCommand cmd = new FbCommand(consulta, conexion))
+                using (FbDataAdapter adapter = new FbDataAdapter(cmd))
+                {
+                    adapter.Fill(dt);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al ejecutar consulta DataTable en Firebird: {ex.Message}");
+            }
+            return dt;
+        }
+
 
 
     }
